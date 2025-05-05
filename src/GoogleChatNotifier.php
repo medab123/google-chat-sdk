@@ -80,21 +80,27 @@ class GoogleChatNotifier
 
     public function send($level, $message, $details = null, $color = '#000000')
     {
+        // Use Cards V2 format for better display options
         $data = [
-            'cards' => [
+            'cardsV2' => [
                 [
-                    'header' => [
-                        'title' => 'Inventory Notification',
-                        'subtitle' => $level,
-                        'imageUrl' => 'https://www.gstatic.com/images/branding/product/2x/chat_48dp.png',
-                        'imageStyle' => 'AVATAR'
-                    ],
-                    'sections' => [
-                        [
-                            'widgets' => [
-                                [
-                                    'textParagraph' => [
-                                        'text' => $message
+                    'cardId' => 'inventory-notification-' . uniqid(),
+                    'card' => [
+                        'header' => [
+                            'title' => 'Inventory Notification',
+                            'subtitle' => $level,
+                            'imageUrl' => 'https://www.gstatic.com/images/branding/product/2x/chat_48dp.png',
+                            'imageType' => 'CIRCLE',
+                            'imageAltText' => strtoupper($level)
+                        ],
+                        'sections' => [
+                            [
+                                'widgets' => [
+                                    [
+                                        'decoratedText' => [
+                                            'text' => $message,
+                                            'wrapText' => true
+                                        ]
                                     ]
                                 ]
                             ]
@@ -104,52 +110,64 @@ class GoogleChatNotifier
             ]
         ];
 
+        // Set color based on level
+        $iconColor = $color;
+        
         // Format details to avoid truncation
         if ($details) {
+            $detailsSection = [
+                'header' => 'Details',
+                'collapsible' => false,
+                'widgets' => []
+            ];
+            
             if (is_array($details)) {
-                // Create individual key-value pairs for each detail
-                $detailsSection = [
-                    'widgets' => []
-                ];
-                
+                // Process each detail as a separate decorated text widget
                 foreach ($details as $key => $value) {
+                    $formattedKey = ucfirst(str_replace('_', ' ', $key));
+                    
                     // Format arrays and objects properly
                     if (is_array($value) || is_object($value)) {
                         $formattedValue = json_encode($value, JSON_PRETTY_PRINT);
+                        
+                        $detailsSection['widgets'][] = [
+                            'decoratedText' => [
+                                'topLabel' => $formattedKey,
+                                'text' => $formattedValue,
+                                'wrapText' => true
+                            ]
+                        ];
                     } else {
-                        $formattedValue = (string)$value;
+                        $detailsSection['widgets'][] = [
+                            'decoratedText' => [
+                                'topLabel' => $formattedKey,
+                                'text' => (string)$value,
+                                'wrapText' => true
+                            ]
+                        ];
                     }
-                    
-                    $detailsSection['widgets'][] = [
-                        'keyValue' => [
-                            'topLabel' => ucfirst(str_replace('_', ' ', $key)),
-                            'content' => $formattedValue
-                        ]
-                    ];
                 }
-                
-                $data['cards'][0]['sections'][] = $detailsSection;
             } else {
                 // If not an array, just add as a single entry
-                $data['cards'][0]['sections'][] = [
-                    'widgets' => [
-                        [
-                            'keyValue' => [
-                                'topLabel' => 'Details',
-                                'content' => (string)$details
-                            ]
-                        ]
+                $detailsSection['widgets'][] = [
+                    'decoratedText' => [
+                        'text' => (string)$details,
+                        'wrapText' => true
                     ]
                 ];
             }
+            
+            // Add the details section to the card
+            $data['cardsV2'][0]['card']['sections'][] = $detailsSection;
         }
 
         // Add timestamp
-        $data['cards'][0]['sections'][] = [
+        $data['cardsV2'][0]['card']['sections'][] = [
             'widgets' => [
                 [
-                    'textParagraph' => [
-                        'text' => 'Time: ' . date('Y-m-d H:i:s')
+                    'decoratedText' => [
+                        'text' => 'Time: ' . date('Y-m-d H:i:s'),
+                        'wrapText' => true
                     ]
                 ]
             ]
