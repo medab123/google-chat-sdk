@@ -170,5 +170,5 @@ class GoogleChatNotifier
                 return '📢';
         }
     }
-    }
+
 }
