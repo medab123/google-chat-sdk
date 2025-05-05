@@ -104,17 +104,44 @@ class GoogleChatNotifier
             ]
         ];
 
+        // Format details to avoid truncation
         if ($details) {
-            $data['cards'][0]['sections'][] = [
-                'widgets' => [
-                    [
+            if (is_array($details)) {
+                // Create individual key-value pairs for each detail
+                $detailsSection = [
+                    'widgets' => []
+                ];
+                
+                foreach ($details as $key => $value) {
+                    // Format arrays and objects properly
+                    if (is_array($value) || is_object($value)) {
+                        $formattedValue = json_encode($value, JSON_PRETTY_PRINT);
+                    } else {
+                        $formattedValue = (string)$value;
+                    }
+                    
+                    $detailsSection['widgets'][] = [
                         'keyValue' => [
-                            'topLabel' => 'Details',
-                            'content' => is_array($details) ? json_encode($details) : $details
+                            'topLabel' => ucfirst(str_replace('_', ' ', $key)),
+                            'content' => $formattedValue
+                        ]
+                    ];
+                }
+                
+                $data['cards'][0]['sections'][] = $detailsSection;
+            } else {
+                // If not an array, just add as a single entry
+                $data['cards'][0]['sections'][] = [
+                    'widgets' => [
+                        [
+                            'keyValue' => [
+                                'topLabel' => 'Details',
+                                'content' => (string)$details
+                            ]
                         ]
                     ]
-                ]
-            ];
+                ];
+            }
         }
 
         // Add timestamp
