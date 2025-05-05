@@ -1,6 +1,6 @@
 <?php
 
-namespace Gooogle\GoogleChatNotifications;
+namespace GooogleChat\GoogleChatNotifications;
 
 use Illuminate\Support\Facades\Http;
 

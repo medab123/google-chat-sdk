@@ -1,0 +1,29 @@
+{
+    "name": "medab123/laravel-gchat-notifications",
+    "description": "Send notifications from Laravel to Google Chat",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Mohammed Elabidi",
+            "email": "mohammed.elabidi123@gmail.com"
+        }
+    ],
+    "require": {
+        "php": "^7.3|^8.3",
+        "illuminate/support": "^8.0|^9.0|^10.0",
+        "guzzlehttp/guzzle": "^7.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "GooogleChat\\GoogleChatNotifications\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "GooogleChat\\GoogleChatNotifications\\GoogleChatNotificationsServiceProvider"
+            ]
+        }
+    }
+}
