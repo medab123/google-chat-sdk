@@ -80,7 +80,13 @@ class GoogleChatNotifier
 
     public function send($level, $message, $details = null, $color = '#000000')
     {
-        // Use Cards V2 format for better display options
+        // Get icon based on level
+        $icon = $this->getLevelIcon($level);
+        
+        // Format message with colored heading based on level
+        $formattedMessage = "<b><font color=\"$color\">$icon $message</font></b>";
+        
+        // Cards v2 format
         $data = [
             'cardsV2' => [
                 [
@@ -91,15 +97,14 @@ class GoogleChatNotifier
                             'subtitle' => $level,
                             'imageUrl' => 'https://www.gstatic.com/images/branding/product/2x/chat_48dp.png',
                             'imageType' => 'CIRCLE',
-                            'imageAltText' => strtoupper($level)
+                            'imageAltText' => 'Notification'
                         ],
                         'sections' => [
                             [
                                 'widgets' => [
                                     [
-                                        'decoratedText' => [
-                                            'text' => $message,
-                                            'wrapText' => true
+                                        'textParagraph' => [
+                                            'text' => $formattedMessage
                                         ]
                                     ]
                                 ]
@@ -110,69 +115,60 @@ class GoogleChatNotifier
             ]
         ];
 
-        // Set color based on level
-        $iconColor = $color;
-        
-        // Format details to avoid truncation
+        // Add details section if provided
         if ($details) {
             $detailsSection = [
                 'header' => 'Details',
-                'collapsible' => false,
-                'widgets' => []
+                'collapsible' => true,
+                'widgets' => [
+                    [
+                        'textParagraph' => [
+                            'text' => is_array($details) 
+                                ? '<pre>' . json_encode($details, JSON_PRETTY_PRINT) . '</pre>' 
+                                : $details
+                        ]
+                    ]
+                ]
             ];
             
-            if (is_array($details)) {
-                // Process each detail as a separate decorated text widget
-                foreach ($details as $key => $value) {
-                    $formattedKey = ucfirst(str_replace('_', ' ', $key));
-                    
-                    // Format arrays and objects properly
-                    if (is_array($value) || is_object($value)) {
-                        $formattedValue = json_encode($value, JSON_PRETTY_PRINT);
-                        
-                        $detailsSection['widgets'][] = [
-                            'decoratedText' => [
-                                'topLabel' => $formattedKey,
-                                'text' => $formattedValue,
-                                'wrapText' => true
-                            ]
-                        ];
-                    } else {
-                        $detailsSection['widgets'][] = [
-                            'decoratedText' => [
-                                'topLabel' => $formattedKey,
-                                'text' => (string)$value,
-                                'wrapText' => true
-                            ]
-                        ];
-                    }
-                }
-            } else {
-                // If not an array, just add as a single entry
-                $detailsSection['widgets'][] = [
-                    'decoratedText' => [
-                        'text' => (string)$details,
-                        'wrapText' => true
-                    ]
-                ];
-            }
-            
-            // Add the details section to the card
             $data['cardsV2'][0]['card']['sections'][] = $detailsSection;
         }
 
-        // Add timestamp
+        // Add timestamp section
         $data['cardsV2'][0]['card']['sections'][] = [
             'widgets' => [
                 [
                     'decoratedText' => [
-                        'text' => 'Time: ' . date('Y-m-d H:i:s'),
-                        'wrapText' => true
+                        'startIcon' => [
+                            'knownIcon' => 'CLOCK'
+                        ],
+                        'text' => date('Y-m-d H:i:s')
                     ]
                 ]
             ]
         ];
 
         return Http::post($this->webhookUrl, $data);
+    }
+    
+    /**
+     * Get appropriate icon for notification level
+     *
+     * @param string $level
+     * @return string
+     */
+    protected function getLevelIcon($level)
+    {
+        switch (strtoupper($level)) {
+            case 'INFO':
+                return '🔵';
+            case 'WARNING':
+                return '⚠️';
+            case 'ERROR':
+                return '❌';
+            default:
+                return '📢';
+        }
+    }
     }
 }
